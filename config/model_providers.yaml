@@ -1,0 +1,108 @@
+# 模型提供商配置
+providers:
+  openai:
+    api_base: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    default_model: "gpt-4-turbo"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "gpt-4-turbo"
+      - "gpt-4"
+      - "gpt-3.5-turbo"
+  
+  anthropic:
+    api_base: "https://api.anthropic.com/v1"
+    api_key: "${ANTHROPIC_API_KEY}"
+    default_model: "claude-3-opus"
+    default_params:
+      temperature: 0.7
+      top_p: 0.9
+      max_tokens: 4096
+    available_models:
+      - "claude-3-opus"
+      - "claude-3-sonnet"
+      - "claude-3-haiku"
+  
+  gemini:
+    api_base: "https://generativelanguage.googleapis.com/v1"
+    api_key: "${GEMINI_API_KEY}"
+    default_model: "gemini-pro"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "gemini-pro"
+      - "gemini-ultra"
+  
+  deepseek:
+    api_base: "https://api.deepseek.com/v1"
+    api_key: "${DEEPSEEK_API_KEY}"
+    default_model: "deepseek-chat"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "deepseek-chat"
+      - "deepseek-coder"
+  
+  openrouter:
+    api_base: "https://openrouter.ai/api/v1"
+    api_key: "${OPENROUTER_API_KEY}"
+    default_model: "openrouter/auto"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "openrouter/auto"
+      - "anthropic/claude-3-opus"
+      - "google/gemini-pro"
+      - "meta/llama-3-70b"
+  
+  ollama:
+    api_base: "http://localhost:11434/api"
+    default_model: "llama3"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "llama3"
+      - "mistral"
+      - "mixtral"
+      - "vicuna"
+  
+  qwen:
+    api_base: "https://dashscope.aliyuncs.com/api/v1"
+    api_key: "${QWEN_API_KEY}"
+    default_model: "qwen-max"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "qwen-max"
+      - "qwen-plus"
+      - "qwen-turbo"
+  
+  doubao:
+    api_base: "https://api.doubao.com/v1"
+    api_key: "${DOUBAO_API_KEY}"
+    default_model: "doubao-pro"
+    default_params:
+      temperature: 0.7
+      top_p: 1.0
+      max_tokens: 4096
+    available_models:
+      - "doubao-pro"
+      - "doubao-lite"
+
+# 全局默认配置
+default_provider: "openai"
+default_retries: 3
+request_timeout: 180
