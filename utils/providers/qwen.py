@@ -18,8 +18,12 @@ class QwenAdapter(BaseModelAdapter):
     
     def _init_api_endpoints(self):
         """初始化通义千问API端点"""
-        self.completion_url = f"{self.api_base}services/aigc/text-generation/generation"
-        self.models_url = f"{self.api_base}services/aigc/text-generation/models"
+        if self.api_base.endswith('v1/'):
+            self.completion_url = f"{self.api_base}chat/completions"
+            self.models_url = f"{self.api_base}models"
+        else:
+            self.completion_url = f"{self.api_base}v1/chat/completions"
+            self.models_url = f"{self.api_base}v1/models"
             
     def get_headers(self) -> Dict[str, str]:
         """获取通义千问API请求头"""

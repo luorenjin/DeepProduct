@@ -1,12 +1,12 @@
 """
-基础模型适配器 - 为所有LLM服务提供商提供基础功能
+基础模型适配器 - 为所有LLM服务提供基础功能
 """
 
 import os
 import json
 import requests
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +30,31 @@ class BaseModelAdapter:
         self.default_model = config.get('default_model', '')
         self.default_params = config.get('default_params', {})
         
+        # 添加默认超时配置
+        self.default_timeout = config.get('timeout', 60)
+        self.default_connect_timeout = config.get('connect_timeout', 10)
+        self.default_read_timeout = config.get('read_timeout', 90)
+        
         # 确保API基础URL正确结尾
         if self.api_base and not self.api_base.endswith('/'):
             self.api_base = self.api_base + '/'
         
         # 初始化API端点，子类需要实现这个方法
         self._init_api_endpoints()
+    
+    def get_provider_config(self) -> Dict[str, Any]:
+        """
+        获取提供商配置信息
+        
+        Returns:
+            包含API密钥和基础URL等配置的字典
+        """
+        return {
+            "provider_name": self.provider_name,
+            "api_key": self.api_key,
+            "api_base": self.api_base,
+            "default_model": self.default_model
+        }
             
     def _init_api_endpoints(self):
         """初始化API端点，子类必须实现此方法"""
@@ -83,7 +102,17 @@ class BaseModelAdapter:
             API响应
         """
         model = model or self.default_model
-        timeout = kwargs.pop('timeout', 60)
+        
+        # 处理超时配置
+        timeout = kwargs.pop('timeout', self.default_timeout)
+        
+        # 如果timeout是单个值，将其转换为元组(连接超时, 读取超时)
+        if isinstance(timeout, (int, float)):
+            timeout = (self.default_connect_timeout, timeout)
+        elif isinstance(timeout, Tuple) and len(timeout) == 2:
+            pass
+        else:
+            timeout = (self.default_connect_timeout, self.default_read_timeout)
         
         # 合并默认参数和用户参数
         params = self.default_params.copy()
@@ -97,12 +126,12 @@ class BaseModelAdapter:
         url = self._get_request_url()
         
         try:
-            logger.debug(f"Sending request to {self.provider_name} at {url}")
+            logger.debug(f"Sending request to {self.provider_name} at {url} with timeout {timeout}")
             response = requests.post(
                 url,
                 headers=headers,
                 json=request_body,
-                timeout=timeout
+                timeout=timeout  # 使用元组格式 (连接超时, 读取超时)
             )
             
             # 检查响应
@@ -118,6 +147,16 @@ class BaseModelAdapter:
                 
             return result
             
+        except requests.exceptions.Timeout as e:
+            # 超时错误特殊处理
+            error_msg = f"Request to {self.provider_name} timed out after {timeout[1]} seconds"
+            logger.error(error_msg)
+            raise TimeoutError(error_msg) from e
+        except requests.exceptions.ConnectionError as e:
+            # 连接错误特殊处理
+            error_msg = f"Connection error when connecting to {self.provider_name}: {str(e)}"
+            logger.error(error_msg)
+            raise ConnectionError(error_msg) from e
         except requests.RequestException as e:
             logger.error(f"Request error for {self.provider_name}: {str(e)}")
             raise
@@ -134,16 +173,22 @@ class BaseModelAdapter:
         """标准化响应为OpenAI格式，子类必须实现此方法"""
         raise NotImplementedError("子类必须实现_standardize_response方法")
     
-    def list_models(self, timeout: int = 30) -> List[Dict[str, Any]]:
+    def list_models(self, timeout: Union[int, Tuple[int, int]] = None) -> List[Dict[str, Any]]:
         """
         获取提供商支持的模型列表
         
         Args:
-            timeout: 请求超时时间（秒）
+            timeout: 请求超时时间（秒）或(连接超时, 读取超时)元组
             
         Returns:
             模型信息列表
         """
+        # 处理超时配置
+        if timeout is None:
+            timeout = (self.default_connect_timeout, self.default_timeout)
+        elif isinstance(timeout, (int, float)):
+            timeout = (self.default_connect_timeout, timeout)
+        
         url = self._get_models_url()
         headers = self.get_headers()
         
@@ -162,6 +207,9 @@ class BaseModelAdapter:
             models = self._extract_models_from_response(result)
             return models
             
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Request to fetch models from {self.provider_name} timed out after {timeout[1]} seconds")
+            return []
         except requests.RequestException as e:
             logger.error(f"Request error when fetching models from {self.provider_name}: {str(e)}")
             return []

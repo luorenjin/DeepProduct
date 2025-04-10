@@ -12,6 +12,8 @@ providers:
       - "gpt-4-turbo"
       - "gpt-4"
       - "gpt-3.5-turbo"
+    timeout: 90         # 读取超时时间
+    connect_timeout: 10 # 连接超时时间
   
   anthropic:
     api_base: "https://api.anthropic.com/v1"
@@ -25,6 +27,8 @@ providers:
       - "claude-3-opus"
       - "claude-3-sonnet"
       - "claude-3-haiku"
+    timeout: 120        # Claude模型可能需要更长的超时时间
+    connect_timeout: 10
   
   gemini:
     api_base: "https://generativelanguage.googleapis.com/v1"
@@ -37,6 +41,8 @@ providers:
     available_models:
       - "gemini-pro"
       - "gemini-ultra"
+    timeout: 60
+    connect_timeout: 10
   
   deepseek:
     api_base: "https://api.deepseek.com/v1"
@@ -49,6 +55,8 @@ providers:
     available_models:
       - "deepseek-chat"
       - "deepseek-coder"
+    timeout: 90
+    connect_timeout: 10
   
   openrouter:
     api_base: "https://openrouter.ai/api/v1"
@@ -63,6 +71,8 @@ providers:
       - "anthropic/claude-3-opus"
       - "google/gemini-pro"
       - "meta/llama-3-70b"
+    timeout: 120       # OpenRouter可能转发到不同的模型，需要更长的超时
+    connect_timeout: 15
   
   ollama:
     api_base: "http://localhost:11434/api"
@@ -76,11 +86,13 @@ providers:
       - "mistral"
       - "mixtral"
       - "vicuna"
+    timeout: 300       # 本地模型可能需要更长的处理时间
+    connect_timeout: 5 # 本地连接通常更快
   
   qwen:
-    api_base: "https://dashscope.aliyuncs.com/api/v1"
+    api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
     api_key: "${QWEN_API_KEY}"
-    default_model: "qwen-max"
+    default_model: "qwen-turbo"
     default_params:
       temperature: 0.7
       top_p: 1.0
@@ -89,6 +101,9 @@ providers:
       - "qwen-max"
       - "qwen-plus"
       - "qwen-turbo"
+      - "qwen-turbo-1101"
+    timeout: 90
+    connect_timeout: 10
   
   doubao:
     api_base: "https://api.doubao.com/v1"
@@ -101,8 +116,12 @@ providers:
     available_models:
       - "doubao-pro"
       - "doubao-lite"
+    timeout: 90
+    connect_timeout: 10
 
 # 全局默认配置
-default_provider: "openai"
+default_provider: "qwen"  # 默认模型提供商
 default_retries: 3
-request_timeout: 180
+request_timeout: 90       # 默认读取超时时间
+connect_timeout: 10       # 默认连接超时时间
+read_timeout: 120         # 默认读取超时时间（替代request_timeout，更明确）

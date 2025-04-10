@@ -1,4 +1,11 @@
+# 基础依赖
+python-dotenv>=1.1.0
+
+# 其他依赖项
 requests == 2.32.3
 pyyaml == 6.0.2
 mem0ai == 0.1.86
 redis == 5.2.1
+sentence_transformers == 4.0.2
+hf-xet == 1.0.2
+google_generativeai == 0.8.4

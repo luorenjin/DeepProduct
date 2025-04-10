@@ -7,7 +7,7 @@ import json
 import yaml
 import logging
 import importlib
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, Tuple
 import requests
 import time
 
@@ -44,10 +44,18 @@ class ModelAdapter:
                 config = yaml.safe_load(f)
                 
             # 处理环境变量
-            for provider_name, provider_config in config['providers'].items():
+            for _, provider_config in config['providers'].items():
                 if 'api_key' in provider_config and provider_config['api_key'].startswith("${") and provider_config['api_key'].endswith("}"):
                     env_var = provider_config['api_key'][2:-1]
                     provider_config['api_key'] = os.environ.get(env_var, "")
+                
+                # 添加超时配置（如果不存在）
+                if 'timeout' not in provider_config:
+                    provider_config['timeout'] = config.get('request_timeout', 60)
+                if 'connect_timeout' not in provider_config:
+                    provider_config['connect_timeout'] = config.get('connect_timeout', 10)
+                if 'read_timeout' not in provider_config:
+                    provider_config['read_timeout'] = config.get('read_timeout', 120)
                     
             return config
         except Exception as e:
@@ -62,12 +70,17 @@ class ModelAdapter:
                         "default_params": {
                             "temperature": 0.7,
                             "max_tokens": 2048
-                        }
+                        },
+                        "timeout": 60,
+                        "connect_timeout": 10,
+                        "read_timeout": 120
                     }
                 },
                 "default_provider": "openai",
                 "default_retries": 3,
-                "request_timeout": 60
+                "request_timeout": 60,
+                "connect_timeout": 10,
+                "read_timeout": 120
             }
     
     def _load_provider_adapters(self):
@@ -136,11 +149,26 @@ class ModelAdapter:
         
         # 获取重试次数
         retries = kwargs.pop('retries', self.config.get('default_retries', 3))
+        
+        # 处理超时配置
         timeout = kwargs.pop('timeout', self.config.get('request_timeout', 60))
+        connect_timeout = kwargs.pop('connect_timeout', self.config.get('connect_timeout', 10))
+        
+        # 如果timeout是整数，将其转换为元组(连接超时, 读取超时)
+        if isinstance(timeout, (int, float)):
+            timeout = (connect_timeout, timeout)
         
         for attempt in range(retries):
             try:
                 return adapter.get_chat_completion(messages, model, timeout=timeout, **kwargs)
+            except (TimeoutError, ConnectionError) as e:
+                error_type = "Timeout" if isinstance(e, TimeoutError) else "Connection"
+                if attempt == retries - 1:
+                    logger.error(f"{error_type} error after {retries} attempts: {str(e)}")
+                    raise
+                logger.warning(f"{error_type} error on attempt {attempt + 1}, retrying: {str(e)}")
+                # 超时错误增加更长的等待时间
+                time.sleep(min(2 ** attempt, 30))  # 指数退避，最长等待30秒
             except Exception as e:
                 if attempt == retries - 1:
                     logger.error(f"Failed to get completion after {retries} attempts: {str(e)}")

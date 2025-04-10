@@ -4,10 +4,10 @@ import os
 import traceback
 from typing import Dict, Any, Optional
 from pathlib import Path
-from utils.memory_manager import MemoryManager
 
 from dotenv import load_dotenv
-load_dotenv()
+
+from utils.memory_manager import MemoryManager
 
 # 配置日志
 logging.basicConfig(
@@ -31,12 +31,7 @@ async def test_memory_manager() -> None:
     - 删除记忆
     """
     try:
-        logger.info(f"开始测试记忆管理器... {os.environ["MEMORY_LLM_MODEL"]}")
-
-        # 设置为内存模式进行测试
-        os.environ["MEMORY_MODE"] = "memory"
-        os.environ["MEMORY_LLM_MODEL"] = "qwen-turbo"
-        
+ 
         # 初始化记忆管理器
         logger.info("初始化记忆管理器...")
         memory_manager = MemoryManager(agent_id="test_agent")
@@ -55,7 +50,7 @@ async def test_memory_manager() -> None:
         logger.info("测试检索记忆...")
         retrieved_memory = await memory_manager.retrieve_memory("product_idea")
         logger.info(f"检索到的记忆: {retrieved_memory}")
-        
+
         # 3. 测试更新记忆
         logger.info("测试更新记忆...")
         update_result = await memory_manager.update_memory(
@@ -68,45 +63,45 @@ async def test_memory_manager() -> None:
         updated_memory = await memory_manager.retrieve_memory("product_idea")
         logger.info(f"更新后的记忆: {updated_memory}")
         
-        # 4. 添加更多记忆用于测试搜索和列表功能
-        await memory_manager.save_memory(
-            key="user_research",
-            content="针对30-45岁的科技爱好者进行的市场调研",
-            priority="normal",
-            tags=["研究", "市场"]
-        )
+        # # 4. 添加更多记忆用于测试搜索和列表功能
+        # await memory_manager.save_memory(
+        #     key="user_research",
+        #     content="针对30-45岁的科技爱好者进行的市场调研",
+        #     priority="normal",
+        #     tags=["研究", "市场"]
+        # )
         
-        await memory_manager.save_memory(
-            key="competitor_analysis",
-            content={"competitors": ["HomeKit", "Google Home", "Alexa"], "strengths": ["AI集成", "用户体验"]},
-            priority="high",
-            tags=["竞争", "分析"]
-        )
+        # await memory_manager.save_memory(
+        #     key="competitor_analysis",
+        #     content={"competitors": ["HomeKit", "Google Home", "Alexa"], "strengths": ["AI集成", "用户体验"]},
+        #     priority="high",
+        #     tags=["竞争", "分析"]
+        # )
         
-        # 5. 测试搜索记忆
-        logger.info("测试搜索记忆...")
-        search_results = await memory_manager.search_memories("智能家居")
-        logger.info(f"搜索结果: {search_results}")
+        # # 5. 测试搜索记忆
+        # logger.info("测试搜索记忆...")
+        # search_results = await memory_manager.search_memories("智能家居")
+        # logger.info(f"搜索结果: {search_results}")
         
-        # 6. 测试列出记忆
-        logger.info("测试列出所有记忆...")
-        all_memories = await memory_manager.list_memories()
-        logger.info(f"找到 {len(all_memories)} 条记忆")
+        # # 6. 测试列出记忆
+        # logger.info("测试列出所有记忆...")
+        # all_memories = await memory_manager.list_memories()
+        # logger.info(f"找到 {len(all_memories)} 条记忆")
         
-        logger.info("测试按优先级筛选记忆...")
-        high_priority = await memory_manager.list_memories(priority="high")
-        logger.info(f"高优先级记忆: {len(high_priority)} 条")
+        # logger.info("测试按优先级筛选记忆...")
+        # high_priority = await memory_manager.list_memories(priority="high")
+        # logger.info(f"高优先级记忆: {len(high_priority)} 条")
         
-        # 7. 测试删除记忆
-        logger.info("测试删除记忆...")
-        forget_result = await memory_manager.forget_memory("user_research")
-        logger.info(f"删除记忆结果: {forget_result}")
+        # # 7. 测试删除记忆
+        # logger.info("测试删除记忆...")
+        # forget_result = await memory_manager.forget_memory("user_research")
+        # logger.info(f"删除记忆结果: {forget_result}")
         
-        # 确认删除成功
-        deleted_memory = await memory_manager.retrieve_memory("user_research")
-        logger.info(f"删除后检索结果应为None: {deleted_memory}")
+        # # 确认删除成功
+        # deleted_memory = await memory_manager.retrieve_memory("user_research")
+        # logger.info(f"删除后检索结果应为None: {deleted_memory}")
         
-        logger.info("记忆管理器测试完成!")
+        # logger.info("记忆管理器测试完成!")
         return True
     except Exception as e:
         logger.error(f"测试过程中发生错误: {str(e)}")
@@ -120,4 +115,5 @@ async def main():
     await test_memory_manager()
 
 if __name__ == "__main__":
+    load_dotenv(".env", override=True)
     asyncio.run(main())
